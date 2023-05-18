@@ -10938,7 +10938,6 @@ type PathAttributeMpReachNLRI struct {
 }
 
 func (p *PathAttributeMpReachNLRI) DecodeFromBytes(data []byte, options ...*MarshallingOption) error {
-
 	value, err := p.PathAttribute.DecodeFromBytes(data, options...)
 	if err != nil {
 		return err
@@ -10951,19 +10950,8 @@ func (p *PathAttributeMpReachNLRI) DecodeFromBytes(data []byte, options ...*Mars
 	}
 
 	// RFC6369 4.3.4 says that AFI/SAFI should be inferred from RIB header and not included in MP_REACH_NLRI
-	// Leaving old code in place for reference and potential backwards compatibility issues
-	var afi uint16
-	var safi uint8
-	if p.AFI == 0 && p.SAFI == 0 {
-		afi = binary.BigEndian.Uint16(value[0:2])
-		safi = value[2]
-		p.AFI = afi
-		p.SAFI = safi
-		value = value[3:]
-	} else {
-		afi = p.AFI
-		safi = p.SAFI
-	}
+	afi := p.AFI
+	safi := p.SAFI
 	_, err = NewPrefixFromRouteFamily(afi, safi)
 	if err != nil {
 		return NewMessageError(eCode, BGP_ERROR_SUB_INVALID_NETWORK_FIELD, eData, err.Error())
@@ -10997,7 +10985,7 @@ func (p *PathAttributeMpReachNLRI) DecodeFromBytes(data []byte, options ...*Mars
 	// the code below is obsolete after new changes and RFC6396-4.3.3 implementation
 	// leaving in case of rollback
 	// https://datatracker.ietf.org/doc/html/rfc6396#section-4.3.3
-	value = value[4+nexthoplen:]
+	/*value = value[4+nexthoplen:]
 	// skip reserved
 	if len(value) == 0 {
 		return NewMessageError(eCode, eSubCode, value, "no skip byte")
@@ -11022,7 +11010,7 @@ func (p *PathAttributeMpReachNLRI) DecodeFromBytes(data []byte, options ...*Mars
 		value = value[prefix.Len(options...)+addpathLen:]
 		p.Value = append(p.Value, prefix)
 	}
-	return nil
+	return nil*/
 }
 
 func (p *PathAttributeMpReachNLRI) Serialize(options ...*MarshallingOption) ([]byte, error) {
