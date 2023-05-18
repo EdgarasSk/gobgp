@@ -14103,7 +14103,7 @@ func GetBGPUpdateAttributesFromMsg(msg *BGPUpdate) map[BGPAttrType]bool {
 	return m
 }
 
-func GetPathAttribute(data []byte) (PathAttributeInterface, error) {
+func GetPathAttribute(data []byte, afi uint16, safi uint8) (PathAttributeInterface, error) {
 	if len(data) < 2 {
 		eCode := uint8(BGP_ERROR_UPDATE_MESSAGE_ERROR)
 		eSubCode := uint8(BGP_ERROR_SUB_ATTRIBUTE_LENGTH_ERROR)
@@ -14131,9 +14131,15 @@ func GetPathAttribute(data []byte) (PathAttributeInterface, error) {
 	case BGP_ATTR_TYPE_CLUSTER_LIST:
 		return &PathAttributeClusterList{}, nil
 	case BGP_ATTR_TYPE_MP_REACH_NLRI:
-		return &PathAttributeMpReachNLRI{}, nil
+		return &PathAttributeMpReachNLRI{
+			AFI:  afi,
+			SAFI: safi,
+		}, nil
 	case BGP_ATTR_TYPE_MP_UNREACH_NLRI:
-		return &PathAttributeMpUnreachNLRI{}, nil
+		return &PathAttributeMpUnreachNLRI{
+			AFI:  afi,
+			SAFI: safi,
+		}, nil
 	case BGP_ATTR_TYPE_EXTENDED_COMMUNITIES:
 		return &PathAttributeExtendedCommunities{}, nil
 	case BGP_ATTR_TYPE_AS4_PATH:
@@ -14236,7 +14242,7 @@ func (msg *BGPUpdate) DecodeFromBytes(data []byte, options ...*MarshallingOption
 			data = data[pathlen:]
 			break
 		}
-		p, err := GetPathAttribute(data)
+		p, err := GetPathAttribute(data, 0, 0) // @todo RFC6369-4.3.4 AFI and SAFI should be inheritted from RIB headers for MP_REACH/UNREACH
 		if err != nil {
 			return err
 		}

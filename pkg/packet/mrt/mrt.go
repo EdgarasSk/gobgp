@@ -384,7 +384,7 @@ func (e *RibEntry) DecodeFromBytes(data []byte) ([]byte, error) {
 	totalLen := binary.BigEndian.Uint16(data[:2])
 	data = data[2:]
 	for attrLen := totalLen; attrLen > 0; {
-		p, err := bgp.GetPathAttribute(data)
+		p, err := bgp.GetPathAttribute(data, e.afi, e.safi)
 		if err != nil {
 			return nil, err
 		}
