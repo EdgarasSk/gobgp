@@ -10949,19 +10949,30 @@ func (p *PathAttributeMpReachNLRI) DecodeFromBytes(data []byte, options ...*Mars
 	if p.Length < 3 {
 		return NewMessageError(eCode, eSubCode, value, "mpreach header length is short")
 	}
-	afi := binary.BigEndian.Uint16(value[0:2])
-	safi := value[2]
-	p.AFI = afi
-	p.SAFI = safi
+
+	// RFC6369 4.3.4 says that AFI/SAFI should be inferred from RIB header and not included in MP_REACH_NLRI
+	// Leaving old code in place for reference and potential backwards compatibility issues
+	var afi uint16
+	var safi uint8
+	if p.AFI == 0 && p.SAFI == 0 {
+		afi = binary.BigEndian.Uint16(value[0:2])
+		safi = value[2]
+		p.AFI = afi
+		p.SAFI = safi
+		value = value[3:]
+	} else {
+		afi = p.AFI
+		safi = p.SAFI
+	}
 	_, err = NewPrefixFromRouteFamily(afi, safi)
 	if err != nil {
 		return NewMessageError(eCode, BGP_ERROR_SUB_INVALID_NETWORK_FIELD, eData, err.Error())
 	}
-	nexthoplen := int(value[3])
-	if len(value) < 4+nexthoplen {
+	nexthoplen := int(value[0])
+	if len(value) < 1+nexthoplen {
 		return NewMessageError(eCode, eSubCode, value, "mpreach nexthop length is short")
 	}
-	nexthopbin := value[4 : 4+nexthoplen]
+	nexthopbin := value[1 : 1+nexthoplen]
 	if nexthoplen > 0 {
 		v4addrlen := 4
 		v6addrlen := 16
@@ -10981,6 +10992,11 @@ func (p *PathAttributeMpReachNLRI) DecodeFromBytes(data []byte, options ...*Mars
 			return NewMessageError(eCode, eSubCode, value, "mpreach nexthop length is incorrect")
 		}
 	}
+
+	return nil
+	// the code below is obsolete after new changes and RFC6396-4.3.3 implementation
+	// leaving in case of rollback
+	// https://datatracker.ietf.org/doc/html/rfc6396#section-4.3.3
 	value = value[4+nexthoplen:]
 	// skip reserved
 	if len(value) == 0 {
@@ -11027,21 +11043,23 @@ func (p *PathAttributeMpReachNLRI) Serialize(options ...*MarshallingOption) ([]b
 	if p.LinkLocalNexthop != nil && p.LinkLocalNexthop.IsLinkLocalUnicast() {
 		nexthoplen = BGP_ATTR_NHLEN_IPV6_GLOBAL_AND_LL
 	}
-	buf := make([]byte, 4+nexthoplen)
-	binary.BigEndian.PutUint16(buf[0:], afi)
-	buf[2] = safi
-	buf[3] = uint8(nexthoplen)
+	buf := make([]byte, 1+nexthoplen)
+	// RFC6369 4.3.4 says that AFI/SAFI should be inferred from RIB header and not included in MP_REACH_NLRI
+	//binary.BigEndian.PutUint16(buf[0:], afi)
+	//buf[2] = safi
+	buf[0] = uint8(nexthoplen)
 	if nexthoplen != 0 {
 		if p.Nexthop.To4() == nil {
-			copy(buf[4+offset:], p.Nexthop.To16())
+			copy(buf[1+offset:], p.Nexthop.To16())
 			if nexthoplen == BGP_ATTR_NHLEN_IPV6_GLOBAL_AND_LL {
-				copy(buf[4+offset+16:], p.LinkLocalNexthop.To16())
+				copy(buf[1+offset+16:], p.LinkLocalNexthop.To16())
 			}
 		} else {
-			copy(buf[4+offset:], p.Nexthop)
+			copy(buf[1+offset:], p.Nexthop)
 		}
 	}
-	buf = append(buf, 0)
+	// RFC6369 4.3.4 says that Reserved field is ommited from MP_REACH_NLRI so we do not append skip byte
+	//buf = append(buf, 0)
 	for _, prefix := range p.Value {
 		pbuf, err := prefix.Serialize(options...)
 		if err != nil {

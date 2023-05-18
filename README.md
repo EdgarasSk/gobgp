@@ -12,6 +12,17 @@ modern environment and implemented in a modern programming language,
 
 ----
 
+## Fork Info
+Forked to resolve [RFC6369](https://datatracker.ietf.org/doc/html/rfc6396) [Section-4.3.4](https://datatracker.ietf.org/doc/html/rfc6396#section-4.3.4) incompatability issues.
+
+Modified packages:
+* [BGP](pkg/packet/bgp/bgp.go):
+  * @todo list of changes
+* [MRT](pkg/packet/mrt/mrt.go):
+  * @todo list of changes
+
+Changes made within the repo only resolve workflow of the above modified packages. The rest of the repo is broken and unusable. Changes might not be optimal or usuable in all possible scenarios.
+
 ## Install
 
 Try [a binary release](https://github.com/osrg/gobgp/releases/latest).

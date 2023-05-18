@@ -24,7 +24,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/osrg/gobgp/v3/pkg/packet/bgp"
+	"github.com/EdgarasSk/gobgp/pkg/packet/bgp"
 )
 
 const (
@@ -361,6 +361,10 @@ type RibEntry struct {
 	PathIdentifier uint32
 	PathAttributes []bgp.PathAttributeInterface
 	isAddPath      bool
+
+	// inherited from RIB RouteFamily in accordance to RFC6396
+	afi  uint16
+	safi uint8
 }
 
 var errNotAllRibEntryBytesAvailable = errors.New("not all RibEntry bytes are available")
@@ -491,6 +495,8 @@ func (u *Rib) DecodeFromBytes(data []byte) error {
 	for i := 0; i < int(entryNum); i++ {
 		e := &RibEntry{
 			isAddPath: u.isAddPath,
+			afi:       afi,
+			safi:      safi,
 		}
 		data, err = e.DecodeFromBytes(data)
 		if err != nil {

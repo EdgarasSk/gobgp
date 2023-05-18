@@ -1,4 +1,6 @@
-module github.com/osrg/gobgp/v3
+module github.com/EdgarasSk/gobgp/v3
+
+go 1.20
 
 require (
 	github.com/BurntSushi/toml v1.2.1
@@ -12,6 +14,7 @@ require (
 	github.com/jessevdk/go-flags v1.5.0
 	github.com/k-sone/critbitgo v1.4.0
 	github.com/kr/pretty v0.3.1
+	github.com/osrg/gobgp/v3 v3.14.0
 	github.com/prometheus/client_golang v1.14.0
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/cobra v1.6.1
@@ -54,5 +57,3 @@ require (
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
-
-go 1.20
